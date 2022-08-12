@@ -2,28 +2,29 @@
 	import moment from "moment";
 	import 'moment/locale/ru'
 
-	//Почитать про промисы и про async await https://www.youtube.com/watch?v=5kAPExqSZ1I
-
-
 	const appid = '77d3010e8f2da851498d867aa5c6e12f'
 	const units = 'metric'
 	const lang = 'ru'
-
-	let lat = '56.857166'
-	let lon = '35.912293'
-
 	const endpoint = "https://api.openweathermap.org/data/2.5/weather";
-
 	let temp
 	let weather = []
 	let name
 	let feelsLike
-
-	let value = `${lat}, ${lon}`
-
 	let timeZone
+	let coords = '55.755819, 37.617644'
+	let skeleton = true
+
+	navigator.geolocation.getCurrentPosition((position) => {
+		const lat  = position.coords.latitude;
+		const lon = position.coords.longitude;
+		coords = `${lat}, ${lon}`
+		getWeather()
+	})
 
 	function getWeather() {
+		const value = coords.split(', ')
+		const lat = value[0]
+		const lon = value[1]
 		const url = `${endpoint}?appid=${appid}&units=${units}&lang=${lang}&lat=${lat}&lon=${lon}`
 
 		fetch(url)
@@ -31,6 +32,7 @@
 					return response.json();
 				})
 				.then((data) => {
+					skeleton = false
 					temp = data.main.temp.toFixed(0)
 					weather = data.weather
 					name = data.name
@@ -40,37 +42,31 @@
 				});
 	}
 
-	function handleSubmit() {
-		let value1 = value.split(', ')
-		lat = value1[0]
-		lon = value1[1]
-
-		getWeather()
-
-	}
-
 	getWeather()
+
 
 </script>
 
 <div class="wrapper">
 	<div class="main-block">
 		<div class="left-block">
-			<div class="city">{name}</div>
+			<div class="city" class:skeleton={skeleton}>{name}</div>
 			{#each weather as item}
-				<div class="weather-info">{item.description}</div>
+				<div class="weather-info" class:skeleton={skeleton}>{item.description}</div>
 			{/each}
-			<div class="weather-img">
-				<img src="icons/01d.svg" alt="weather" class="img">
+			<div class="weather-img" class:skeleton={skeleton}>
+				{#each weather as item}
+					<img src="icons/{item.icon}.svg" alt="weather" class="img">
+				{/each}
 			</div>
-			<div class="temp">{temp}°C</div>
-			<div class="feels-like">Ощущается как {feelsLike}</div>
+			<div class="temp" class:skeleton={skeleton}>{temp}°C</div>
+			<div class="feels-like" class:skeleton={skeleton}>Ощущается как {feelsLike}</div>
 		</div>
 		<div class="right-block">
 			<div class="top-block">
-				<div class="time-zone">{timeZone}</div>
-				<form on:submit|preventDefault={handleSubmit}>
-					<input type="text" name="coords" bind:value>
+				<div class="time-zone" class:skeleton={skeleton}>{timeZone}</div>
+				<form on:submit|preventDefault={getWeather}>
+					<input type="text" name="coords" bind:value={coords}>
 					<button>Получить погоду</button>
 				</form>
 			</div>
@@ -150,5 +146,10 @@
 		font-size: 24px;
 		line-height: 30px;
 		font-weight: bold;
+	}
+	.skeleton {
+		background: #e2e2e2;
+		color: #e2e2e2;
+		overflow: hidden;
 	}
 </style>
