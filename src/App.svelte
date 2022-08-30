@@ -1,6 +1,16 @@
 <script>
+    //Svelte Simple Autocomplete по адресу
+    //Список городов https://dadata.ru/
+    //Посмотреть другие компоненты автокомплита
+    //https://svelte.dev/repl/5734f123973d4682978427024ca90850?version=3.29.0
+	//https://www.npmjs.com/package/svelte-autocomplete-select#install
+	//https://dadata.ru/api/suggest/address/
+
+
+
 	import moment from "moment";
 	import 'moment/locale/ru'
+	import AutocompleteSelect from "svelte-autocomplete-select"
 
 	const appid = '77d3010e8f2da851498d867aa5c6e12f'
 	const units = 'metric'
@@ -19,6 +29,44 @@
 	let sunrise
 	let sunset
 
+
+
+
+
+	let urlData = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
+	let token = "9c26a636e4864bf9846ce7ab303aa79ec1cc58db";
+	let query = "москва";
+	let city = ["Москва", "Санкт-Петербург", "Владивосток", "Тула"]
+
+	const getAddress = (query) => {
+		let options = {
+			method: "POST",
+			mode: "cors",
+			headers: {
+				"Content-Type": "application/json",
+				"Accept": "application/json",
+				"Authorization": "Token " + token
+			},
+			body: JSON.stringify({query: query})
+		}
+
+		fetch(urlData, options)
+			.then(response => response.json())
+			.then(res => {
+				console.log('data',res)
+				getWeather(res.suggestions[0].data.geo_lat, res.suggestions[0].data.geo_lon)
+				city = res.suggestions.map(el => {
+					return el.value
+				})
+			})
+	}
+
+
+
+
+
+
+
 	navigator.geolocation.getCurrentPosition((position) => {
 		const lat  = position.coords.latitude;
 		const lon = position.coords.longitude;
@@ -26,18 +74,14 @@
 		getWeather()
 	})
 
-	function timeConverter(UNIX_timestamp){
-		let a = new Date(UNIX_timestamp * 1000)
-		let hour = a.getHours()
-		let min = "0" + a.getMinutes()
-		let time = hour + ':' + min.substr(-2)
-		return time;
+	function timeConverter(timestamp){
+        return moment(timestamp * 1000).format('HH:mm')
 	}
 
-	function getWeather() {
+	function getWeather(latitude, lng) {
 		const value = coords.split(', ')
-		const lat = value[0]
-		const lon = value[1]
+		const lat = latitude
+		const lon = lng
 		const url = `${endpoint}?appid=${appid}&units=${units}&lang=${lang}&lat=${lat}&lon=${lon}`
 
 		fetch(url)
@@ -45,7 +89,6 @@
 					return response.json();
 				})
 				.then((data) => {
-					skeleton = false
 					temp = data.main.temp.toFixed(0)
 					weather = data.weather
 					name = data.name
@@ -56,13 +99,20 @@
 					visibility = (data.visibility / 1000)
 					sunrise = timeConverter(data.sys.sunrise)
 					sunset = timeConverter(data.sys.sunset)
-
-					console.log(data)
-				});
+				})
+                .finally(() => {
+                    skeleton = false
+                })
 	}
 
-	getWeather()
-
+	getAddress('Москва')
+	let test = ''
+	$: {
+		console.log(test)
+		if (test.length > 3) {
+			getAddress(test)
+		}
+	}
 </script>
 
 <div class="wrapper">
@@ -84,7 +134,13 @@
 			<div class="top-block">
 				<div class="time-zone" class:skeleton={skeleton}>{timeZone}</div>
 				<form class="form-block" on:submit|preventDefault={getWeather} class:skeleton={skeleton}>
-					<input type="text" name="coords" bind:value={coords} class="coords">
+<!--					<input type="text" name="coords" bind:value={coords} class="coords">-->
+					<AutocompleteSelect
+							options={city}
+							placeholder="Выберите город"
+							onSubmit={console.log}
+							bind:value={test}
+					/>
 				</form>
 			</div>
 			<div class="weather-block" class:skeleton={skeleton}>
