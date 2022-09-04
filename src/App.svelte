@@ -1,13 +1,4 @@
 <script>
-    //Svelte Simple Autocomplete по адресу
-    //Список городов https://dadata.ru/
-    //Посмотреть другие компоненты автокомплита
-    //https://svelte.dev/repl/5734f123973d4682978427024ca90850?version=3.29.0
-	//https://www.npmjs.com/package/svelte-autocomplete-select#install
-	//https://dadata.ru/api/suggest/address/
-
-
-
 	import moment from "moment";
 	import 'moment/locale/ru'
 	import AutocompleteSelect from "svelte-autocomplete-select"
@@ -28,15 +19,18 @@
 	let visibility
 	let sunrise
 	let sunset
-
-
-
-
-
 	let urlData = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
 	let token = "9c26a636e4864bf9846ce7ab303aa79ec1cc58db";
 	let query = "москва";
 	let city = ["Москва", "Санкт-Петербург", "Владивосток", "Тула"]
+	let selectValue = ''
+
+	navigator.geolocation.getCurrentPosition((position) => {
+		const lat  = position.coords.latitude;
+		const lon = position.coords.longitude;
+		coords = `${lat}, ${lon}`
+		getWeather(lat, lon)
+	})
 
 	const getAddress = (query) => {
 		let options = {
@@ -53,7 +47,6 @@
 		fetch(urlData, options)
 			.then(response => response.json())
 			.then(res => {
-				console.log('data',res)
 				getWeather(res.suggestions[0].data.geo_lat, res.suggestions[0].data.geo_lon)
 				city = res.suggestions.map(el => {
 					return el.value
@@ -61,27 +54,12 @@
 			})
 	}
 
-
-
-
-
-
-
-	navigator.geolocation.getCurrentPosition((position) => {
-		const lat  = position.coords.latitude;
-		const lon = position.coords.longitude;
-		coords = `${lat}, ${lon}`
-		getWeather()
-	})
-
 	function timeConverter(timestamp){
         return moment(timestamp * 1000).format('HH:mm')
 	}
 
-	function getWeather(latitude, lng) {
-		const value = coords.split(', ')
-		const lat = latitude
-		const lon = lng
+	function getWeather(lat, lon) {
+
 		const url = `${endpoint}?appid=${appid}&units=${units}&lang=${lang}&lat=${lat}&lon=${lon}`
 
 		fetch(url)
@@ -105,12 +83,9 @@
                 })
 	}
 
-	getAddress('Москва')
-	let test = ''
 	$: {
-		console.log(test)
-		if (test.length > 3) {
-			getAddress(test)
+		if (selectValue.length > 0) {
+			getAddress(selectValue)
 		}
 	}
 </script>
@@ -138,8 +113,7 @@
 					<AutocompleteSelect
 							options={city}
 							placeholder="Выберите город"
-							onSubmit={console.log}
-							bind:value={test}
+							bind:value={selectValue}
 					/>
 				</form>
 			</div>
@@ -193,7 +167,7 @@
 					<div class="caption">Закат солнца</div>
 					<div class="info-block">
 						<div class="img-block">
-							<img src="icons/sunrise.png" alt="img">
+							<img src="icons/sunset.png" alt="img">
 						</div>
 						<div class="text-block">{sunset}</div>
 					</div>
