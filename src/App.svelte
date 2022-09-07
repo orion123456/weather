@@ -108,14 +108,16 @@
 		<div class="right-block">
 			<div class="top-block">
 				<div class="time-zone" class:skeleton={skeleton}>{timeZone}</div>
-				<form class="form-block" on:submit|preventDefault={getWeather} class:skeleton={skeleton}>
-<!--					<input type="text" name="coords" bind:value={coords} class="coords">-->
-					<AutocompleteSelect
-							options={city}
-							placeholder="Выберите город"
-							bind:value={selectValue}
-					/>
-				</form>
+				<div class="form-block">
+					<div class="form-text">Введите название города</div>
+					<form class="form-block" on:submit|preventDefault={getWeather} class:skeleton={skeleton}>
+						<AutocompleteSelect
+								options={city}
+								placeholder="Выберите город"
+								bind:value={selectValue}
+						/>
+					</form>
+				</div>
 			</div>
 			<div class="weather-block" class:skeleton={skeleton}>
 				<div class="weather-item">
@@ -305,6 +307,14 @@
 		font-size: 32px;
 		line-height: 35px;
 		font-weight: bold;
+	}
+	.form-block {
+		display: flex;
+		align-items: center;
+	}
+	.form-block .form-text {
+		margin-right: 10px;
+		font-size: 11px;
 	}
 
 	@media (max-width: 1200px) {
